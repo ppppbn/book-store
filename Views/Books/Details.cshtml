@@ -1,0 +1,164 @@
+@model BookStoreApp.Models.Book
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Books" asp-action="Index">Danh mục sách</a></li>
+        <li class="breadcrumb-item active">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Book Image -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl) && Model.ImageUrl.StartsWith("http"))
+            {
+                <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.Title" 
+                     style="max-height: 400px; object-fit: contain;"
+                     onerror="this.style.display='none';this.nextElementSibling.classList.add('show');">
+                <div class="img-fallback align-items-center justify-content-center bg-light" style="height: 400px;">
+                    <i class="bi bi-book text-muted" style="font-size: 8rem;"></i>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
+                    <i class="bi bi-book text-muted" style="font-size: 8rem;"></i>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Book Info -->
+    <div class="col-md-8">
+        <h1 class="mb-3">@Model.Title</h1>
+        
+        <div class="mb-4">
+            <table class="table table-borderless">
+                <tr>
+                    <td class="text-muted" style="width: 150px;"><i class="bi bi-person me-2"></i>Tác giả:</td>
+                    <td class="fw-bold">@Model.Author</td>
+                </tr>
+                @if (!string.IsNullOrEmpty(Model.Publisher))
+                {
+                    <tr>
+                        <td class="text-muted"><i class="bi bi-building me-2"></i>Nhà xuất bản:</td>
+                        <td>@Model.Publisher</td>
+                    </tr>
+                }
+                @if (Model.PublishedYear.HasValue)
+                {
+                    <tr>
+                        <td class="text-muted"><i class="bi bi-calendar me-2"></i>Năm xuất bản:</td>
+                        <td>@Model.PublishedYear</td>
+                    </tr>
+                }
+                @if (Model.Category != null)
+                {
+                    <tr>
+                        <td class="text-muted"><i class="bi bi-bookmark me-2"></i>Thể loại:</td>
+                        <td>
+                            <a asp-controller="Books" asp-action="Index" asp-route-categoryId="@Model.CategoryId" 
+                               class="badge bg-primary text-decoration-none">
+                                @Model.Category.Name
+                            </a>
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td class="text-muted"><i class="bi bi-box me-2"></i>Tình trạng:</td>
+                    <td>
+                        @if (Model.StockQuantity > 0)
+                        {
+                            <span class="badge bg-success">Còn @Model.StockQuantity sản phẩm</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Hết hàng</span>
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Price & Add to Cart -->
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">Giá bán:</span>
+                        <h2 class="text-primary mb-0">@Model.Price.ToString("N0") ₫</h2>
+                    </div>
+                    @if (Model.StockQuantity > 0)
+                    {
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="input-group" style="width: 130px;">
+                                <button class="btn btn-outline-secondary" type="button" onclick="changeQty(-1)">-</button>
+                                <input type="number" id="quantity" class="form-control text-center" value="1" min="1" max="@Model.StockQuantity">
+                                <button class="btn btn-outline-secondary" type="button" onclick="changeQty(1)">+</button>
+                            </div>
+                            <button class="btn btn-primary btn-lg" onclick="addToCartWithQty(@Model.Id)">
+                                <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <button class="btn btn-secondary btn-lg" disabled>
+                            <i class="bi bi-x-circle me-2"></i>Hết hàng
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div class="mb-4">
+                <h4><i class="bi bi-info-circle me-2"></i>Mô tả sách</h4>
+                <p class="text-muted">@Model.Description</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Related Books -->
+@if (ViewBag.RelatedBooks != null && ((List<BookStoreApp.Models.Book>)ViewBag.RelatedBooks).Any())
+{
+    <section class="mt-5">
+        <h3 class="border-bottom pb-2 mb-4">
+            <i class="bi bi-collection me-2"></i>Sách cùng thể loại
+        </h3>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            @foreach (var book in (List<BookStoreApp.Models.Book>)ViewBag.RelatedBooks)
+            {
+                <div class="col">
+                    <partial name="_BookCardPartial" model="book" />
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        function changeQty(delta) {
+            const input = document.getElementById('quantity');
+            const max = parseInt(input.max);
+            let value = parseInt(input.value) + delta;
+            if (value < 1) value = 1;
+            if (value > max) value = max;
+            input.value = value;
+        }
+
+        function addToCartWithQty(bookId) {
+            const qty = parseInt(document.getElementById('quantity').value);
+            addToCart(bookId, qty);
+        }
+    </script>
+}

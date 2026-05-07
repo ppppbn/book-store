@@ -1,0 +1,197 @@
+@model BookStoreApp.ViewModels.CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<h2 class="mb-4"><i class="bi bi-cart3 me-2"></i>Giỏ hàng của bạn</h2>
+
+@if (Model.Items.Any())
+{
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle" id="cartTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-center" style="width: 150px;">Số lượng</th>
+                                    <th class="text-end" style="width: 150px;">Thành tiền</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr id="cartItem-@item.Id">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(item.Book?.ImageUrl) && item.Book.ImageUrl.StartsWith("http"))
+                                                {
+                                                    <img src="@item.Book.ImageUrl" class="me-3 rounded" style="width: 60px; height: 80px; object-fit: cover;"
+                                                         onerror="this.style.display='none';this.nextElementSibling.classList.add('show');">
+                                                    <div class="img-fallback bg-light me-3 rounded align-items-center justify-content-center" style="width: 60px; height: 80px;">
+                                                        <i class="bi bi-book text-muted"></i>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 80px;">
+                                                        <i class="bi bi-book text-muted"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <a href="@Url.Action("Details", "Books", new { id = item.BookId })" class="text-decoration-none fw-bold">
+                                                        @item.Book?.Title
+                                                    </a>
+                                                    <p class="text-muted small mb-0">@item.Book?.Author</p>
+                                                    <span class="text-primary">@item.Book?.Price.ToString("N0") ₫</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="input-group input-group-sm" style="width: 120px; margin: 0 auto;">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(@item.Id, -1)">-</button>
+                                                <input type="text" class="form-control text-center quantity-input" value="@item.Quantity" 
+                                                       data-cart-id="@item.Id" data-max="@item.Book?.StockQuantity" readonly>
+                                                <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(@item.Id, 1)">+</button>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <span class="fw-bold text-primary item-subtotal" data-cart-id="@item.Id">
+                                                @item.SubTotal.ToString("N0") ₫
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(@item.Id)" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Tổng đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Số lượng:</span>
+                        <span id="totalItems">@Model.TotalItems sản phẩm</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Tổng tiền:</strong>
+                        <strong class="text-primary fs-4" id="cartTotal">@Model.TotalAmount.ToString("N0") ₫</strong>
+                    </div>
+                    <a asp-controller="Orders" asp-action="Checkout" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-credit-card me-2"></i>Tiến hành đặt hàng
+                    </a>
+                    <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="bi bi-arrow-left me-2"></i>Tiếp tục mua sắm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-cart-x text-muted" style="font-size: 5rem;"></i>
+        <h3 class="mt-4">Giỏ hàng trống</h3>
+        <p class="text-muted">Bạn chưa có sản phẩm nào trong giỏ hàng.</p>
+        <a asp-controller="Books" asp-action="Index" class="btn btn-primary btn-lg">
+            <i class="bi bi-book me-2"></i>Khám phá sách ngay
+        </a>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function updateQuantity(cartItemId, delta) {
+            const input = document.querySelector(`input[data-cart-id="${cartItemId}"]`);
+            const max = parseInt(input.dataset.max) || 100;
+            let newQty = parseInt(input.value) + delta;
+            
+            if (newQty < 1) newQty = 1;
+            if (newQty > max) newQty = max;
+            
+            if (newQty === parseInt(input.value)) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value 
+                       || document.querySelector('meta[name="csrf-token"]')?.content;
+
+            fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `cartItemId=${cartItemId}&quantity=${newQty}&__RequestVerificationToken=${token}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = newQty;
+                    document.querySelector(`.item-subtotal[data-cart-id="${cartItemId}"]`).textContent = 
+                        new Intl.NumberFormat('vi-VN').format(data.subTotal) + ' ₫';
+                    document.getElementById('cartTotal').textContent = 
+                        new Intl.NumberFormat('vi-VN').format(data.cartTotal) + ' ₫';
+                    updateCartBadge();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            });
+        }
+
+        function removeFromCart(cartItemId) {
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch('/Cart/RemoveFromCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `cartItemId=${cartItemId}&__RequestVerificationToken=${token}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById(`cartItem-${cartItemId}`);
+                    row.remove();
+                    document.getElementById('cartTotal').textContent = 
+                        new Intl.NumberFormat('vi-VN').format(data.cartTotal) + ' ₫';
+                    updateCartBadge();
+                    showToast(data.message, 'success');
+                    
+                    // Refresh if cart is empty
+                    if (data.cartCount === 0) {
+                        location.reload();
+                    }
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            });
+        }
+    </script>
+}

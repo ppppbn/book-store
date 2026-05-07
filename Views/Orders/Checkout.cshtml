@@ -1,0 +1,122 @@
+@model BookStoreApp.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h2 class="mb-4"><i class="bi bi-credit-card me-2"></i>Thanh toán đơn hàng</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="Checkout" method="post">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Thông tin giao hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="ShippingAddress" class="form-label"></label>
+                        <textarea asp-for="ShippingAddress" class="form-control" rows="3" 
+                                  placeholder="Nhập địa chỉ giao hàng chi tiết (số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố)"></textarea>
+                        <span asp-validation-for="ShippingAddress" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PaymentMethod" class="form-label"></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="PaymentMethod" id="cod" value="COD" checked>
+                            <label class="form-check-label" for="cod">
+                                <i class="bi bi-cash-coin me-2"></i>Thanh toán khi nhận hàng (COD)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="PaymentMethod" id="bank" value="BankTransfer">
+                            <label class="form-check-label" for="bank">
+                                <i class="bi bi-bank me-2"></i>Chuyển khoản ngân hàng
+                            </label>
+                        </div>
+                        <span asp-validation-for="PaymentMethod" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Note" class="form-label"></label>
+                        <textarea asp-for="Note" class="form-control" rows="2" 
+                                  placeholder="Ghi chú cho đơn hàng (nếu có)"></textarea>
+                        <span asp-validation-for="Note" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-bag me-2"></i>Sản phẩm đặt mua (@Model.CartItems.Count)</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var item in Model.CartItems)
+                    {
+                        <div class="d-flex align-items-center py-2 border-bottom">
+                            @if (!string.IsNullOrEmpty(item.Book?.ImageUrl) && item.Book.ImageUrl.StartsWith("http"))
+                            {
+                                <img src="@item.Book.ImageUrl" class="me-3 rounded" style="width: 50px; height: 65px; object-fit: cover;"
+                                     onerror="this.style.display='none';this.nextElementSibling.classList.add('show');">
+                                <div class="img-fallback bg-light me-3 rounded align-items-center justify-content-center" style="width: 50px; height: 65px;">
+                                    <i class="bi bi-book text-muted"></i>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 65px;">
+                                    <i class="bi bi-book text-muted"></i>
+                                </div>
+                            }
+                            <div class="flex-grow-1">
+                                <span class="fw-bold">@item.Book?.Title</span>
+                                <br>
+                                <small class="text-muted">@item.Book?.Price.ToString("N0") ₫ x @item.Quantity</small>
+                            </div>
+                            <span class="fw-bold text-primary">@item.SubTotal.ToString("N0") ₫</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại giỏ hàng
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>Đặt hàng
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Tóm tắt đơn hàng</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tạm tính:</span>
+                    <span>@Model.TotalAmount.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Phí vận chuyển:</span>
+                    <span class="text-success">Miễn phí</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <strong>Tổng thanh toán:</strong>
+                    <strong class="text-success fs-4">@Model.TotalAmount.ToString("N0") ₫</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

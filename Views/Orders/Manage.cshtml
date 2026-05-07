@@ -1,0 +1,225 @@
+@model BookStoreApp.ViewModels.OrderListViewModel
+@using BookStoreApp.Models.Enums
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-box me-2"></i>Quản lý đơn hàng</h2>
+</div>
+
+<!-- Filter & Bulk Actions -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <form asp-action="Manage" method="get" class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0 text-nowrap">Lọc theo trạng thái:</label>
+                    <select name="status" class="form-select" style="width: auto;" onchange="this.form.submit()">
+                        <option value="">Tất cả</option>
+                        <option value="@((int)OrderStatus.Pending)" selected="@(Model.FilterStatus == OrderStatus.Pending)">Chờ xác nhận</option>
+                        <option value="@((int)OrderStatus.Confirmed)" selected="@(Model.FilterStatus == OrderStatus.Confirmed)">Đã xác nhận</option>
+                        <option value="@((int)OrderStatus.Shipping)" selected="@(Model.FilterStatus == OrderStatus.Shipping)">Đang giao hàng</option>
+                        <option value="@((int)OrderStatus.Completed)" selected="@(Model.FilterStatus == OrderStatus.Completed)">Hoàn thành</option>
+                        <option value="@((int)OrderStatus.Cancelled)" selected="@(Model.FilterStatus == OrderStatus.Cancelled)">Đã hủy</option>
+                    </select>
+                </form>
+            </div>
+            <div class="col-md-6 text-end">
+                <!-- Bulk Action Buttons - Hidden by default -->
+                <div id="bulkActions" class="d-none">
+                    <span class="me-3 text-muted">
+                        Đã chọn <strong id="selectedCount">0</strong> đơn hàng
+                    </span>
+                    <button type="button" class="btn btn-success me-2" onclick="bulkAction('confirm')">
+                        <i class="bi bi-check-circle me-1"></i>Xác nhận
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="bulkAction('cancel')">
+                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Orders.Any())
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                                </div>
+                            </th>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Ngày đặt</th>
+                            <th class="text-end">Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.Orders)
+                        {
+                            var canSelect = order.Status == OrderStatus.Pending;
+                            <tr class="@(canSelect ? "selectable-row" : "")">
+                                <td>
+                                    @if (canSelect)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input order-checkbox" type="checkbox" 
+                                                   value="@order.Id" onchange="updateSelection()">
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" disabled 
+                                                   title="Chỉ có thể chọn đơn hàng đang chờ xác nhận">
+                                        </div>
+                                    }
+                                </td>
+                                <td><strong>#@order.Id</strong></td>
+                                <td>
+                                    <div>@order.User?.FullName</div>
+                                    <small class="text-muted">@order.User?.Email</small>
+                                </td>
+                                <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end text-primary fw-bold">@order.TotalAmount.ToString("N0") ₫</td>
+                                <td>
+                                    @{
+                                        var badgeClass = order.Status switch
+                                        {
+                                            OrderStatus.Pending => "bg-warning text-dark",
+                                            OrderStatus.Confirmed => "bg-info",
+                                            OrderStatus.Shipping => "bg-primary",
+                                            OrderStatus.Completed => "bg-success",
+                                            OrderStatus.Cancelled => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@order.StatusDisplay</span>
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Phân trang" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Manage" asp-route-page="@(Model.Page - 1)" asp-route-status="@Model.FilterStatus">Trước</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-action="Manage" asp-route-page="@i" asp-route-status="@Model.FilterStatus">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Manage" asp-route-page="@(Model.Page + 1)" asp-route-status="@Model.FilterStatus">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted mt-3">Không có đơn hàng nào.</p>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+            updateSelection();
+        }
+
+        function updateSelection() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const count = checkboxes.length;
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectAll = document.getElementById('selectAll');
+            
+            selectedCount.textContent = count;
+            
+            if (count > 0) {
+                bulkActions.classList.remove('d-none');
+            } else {
+                bulkActions.classList.add('d-none');
+            }
+
+            // Update select all checkbox state
+            const allCheckboxes = document.querySelectorAll('.order-checkbox');
+            selectAll.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+            selectAll.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+        }
+
+        function bulkAction(action) {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const orderIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            if (orderIds.length === 0) {
+                showToast('Vui lòng chọn ít nhất một đơn hàng.', 'warning');
+                return;
+            }
+
+            const actionText = action === 'confirm' ? 'xác nhận' : 'hủy';
+            if (!confirm(`Bạn có chắc muốn ${actionText} ${orderIds.length} đơn hàng đã chọn?`)) {
+                return;
+            }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch('/Orders/BulkUpdateStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `orderIds=${orderIds.join(',')}&action=${action}&__RequestVerificationToken=${encodeURIComponent(token)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            });
+        }
+
+        // Highlight selected rows
+        document.querySelectorAll('.order-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                this.closest('tr').classList.toggle('table-active', this.checked);
+            });
+        });
+    </script>
+}

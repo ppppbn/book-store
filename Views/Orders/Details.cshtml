@@ -1,0 +1,141 @@
+@model BookStoreApp.Models.Order
+@{
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.Id}";
+}
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="MyOrders">Đơn hàng của tôi</a></li>
+        <li class="breadcrumb-item active">Đơn hàng #@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Đơn hàng #@Model.Id</h5>
+                @{
+                    var badgeClass = Model.Status switch
+                    {
+                        BookStoreApp.Models.Enums.OrderStatus.Pending => "bg-warning text-dark",
+                        BookStoreApp.Models.Enums.OrderStatus.Confirmed => "bg-info",
+                        BookStoreApp.Models.Enums.OrderStatus.Shipping => "bg-light text-dark",
+                        BookStoreApp.Models.Enums.OrderStatus.Completed => "bg-success",
+                        BookStoreApp.Models.Enums.OrderStatus.Cancelled => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+                }
+                <span class="badge @badgeClass fs-6">@Model.StatusDisplay</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Thông tin đơn hàng</h6>
+                        <p class="mb-1"><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p class="mb-1"><strong>Phương thức thanh toán:</strong> 
+                            @(Model.PaymentMethod == "COD" ? "Thanh toán khi nhận hàng" : "Chuyển khoản ngân hàng")
+                        </p>
+                        @if (!string.IsNullOrEmpty(Model.Note))
+                        {
+                            <p class="mb-1"><strong>Ghi chú:</strong> @Model.Note</p>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Địa chỉ giao hàng</h6>
+                        <p>@Model.ShippingAddress</p>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3">Chi tiết sản phẩm</h6>
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detail in Model.OrderDetails)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(detail.Book?.ImageUrl))
+                                        {
+                                            <img src="@detail.Book.ImageUrl" class="me-2" style="width: 40px; height: 55px; object-fit: cover;">
+                                        }
+                                        <div>
+                                            <a href="@Url.Action("Details", "Books", new { id = detail.BookId })" class="text-decoration-none">
+                                                @detail.Book?.Title
+                                            </a>
+                                            <br><small class="text-muted">@detail.Book?.Author</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">@detail.Quantity</td>
+                                <td class="text-end">@detail.UnitPrice.ToString("N0") ₫</td>
+                                <td class="text-end">@detail.SubTotal.ToString("N0") ₫</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                            <td class="text-end"><strong class="text-primary fs-5">@Model.TotalAmount.ToString("N0") ₫</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <a asp-action="MyOrders" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Order Status Timeline -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Trạng thái đơn hàng</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    @{
+                        var statuses = new[] { 
+                            (BookStoreApp.Models.Enums.OrderStatus.Pending, "Chờ xác nhận", "bi-hourglass-split"),
+                            (BookStoreApp.Models.Enums.OrderStatus.Confirmed, "Đã xác nhận", "bi-check-circle"),
+                            (BookStoreApp.Models.Enums.OrderStatus.Shipping, "Đang giao hàng", "bi-truck"),
+                            (BookStoreApp.Models.Enums.OrderStatus.Completed, "Hoàn thành", "bi-bag-check")
+                        };
+                    }
+                    @foreach (var (status, label, icon) in statuses)
+                    {
+                        var isActive = (int)Model.Status >= (int)status && Model.Status != BookStoreApp.Models.Enums.OrderStatus.Cancelled;
+                        var isCurrent = Model.Status == status;
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi @icon fs-4 @(isActive ? "text-success" : "text-muted")"></i>
+                            </div>
+                            <div class="@(isCurrent ? "fw-bold" : "") @(!isActive ? "text-muted" : "")">
+                                @label
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Status == BookStoreApp.Models.Enums.OrderStatus.Cancelled)
+                    {
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi bi-x-circle fs-4 text-danger"></i>
+                            </div>
+                            <div class="text-danger fw-bold">Đã hủy</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

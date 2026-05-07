@@ -1,0 +1,149 @@
+@model BookStoreApp.ViewModels.BookSearchViewModel
+@{
+    ViewData["Title"] = "Danh mục sách";
+}
+
+<div class="row">
+    <!-- Sidebar Filter -->
+    <div class="col-lg-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Bộ lọc</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Tìm kiếm</label>
+                    <div class="input-group">
+                        <input type="text" id="searchKeyword" class="form-control" 
+                               placeholder="Tên sách, tác giả..." value="@Model.Keyword">
+                        <button class="btn btn-primary" type="button" onclick="searchBooks()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Thể loại</label>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action category-filter @(Model.CategoryId == null ? "active" : "")"
+                           data-category="">
+                            <i class="bi bi-grid me-2"></i>Tất cả thể loại
+                        </a>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action category-filter @(Model.CategoryId == category.Id ? "active" : "")"
+                               data-category="@category.Id">
+                                <i class="bi bi-bookmark me-2"></i>@category.Name
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book List -->
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-book me-2"></i>Danh mục sách</h2>
+            <span class="text-muted">Tìm thấy <strong id="totalCount">@Model.TotalItems</strong> sách</span>
+        </div>
+
+        <!-- Loading spinner -->
+        <div id="loadingSpinner" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Book list container -->
+        <div id="bookListContainer">
+            <partial name="_BookListPartial" model="Model" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const currentCategoryId = '@Model.CategoryId' || '';
+        
+        // Search on Enter key
+        document.getElementById('searchKeyword').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchBooks();
+            }
+        });
+
+        // Category filter click
+        document.querySelectorAll('.category-filter').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const categoryId = this.dataset.category;
+                loadBooks(1, categoryId, document.getElementById('searchKeyword').value);
+                
+                // Update active state
+                document.querySelectorAll('.category-filter').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Pagination click (delegated)
+        document.getElementById('bookListContainer').addEventListener('click', function(e) {
+            const pageLink = e.target.closest('.page-nav');
+            if (pageLink && !pageLink.parentElement.classList.contains('disabled')) {
+                e.preventDefault();
+                const page = pageLink.dataset.page;
+                const category = pageLink.dataset.category;
+                const keyword = pageLink.dataset.keyword;
+                loadBooks(page, category, keyword);
+            }
+        });
+
+        function searchBooks() {
+            const keyword = document.getElementById('searchKeyword').value;
+            const activeCategory = document.querySelector('.category-filter.active');
+            const categoryId = activeCategory ? activeCategory.dataset.category : '';
+            loadBooks(1, categoryId, keyword);
+        }
+
+        function loadBooks(page, categoryId, keyword) {
+            const container = document.getElementById('bookListContainer');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            spinner.style.display = 'block';
+            container.style.opacity = '0.5';
+
+            const params = new URLSearchParams();
+            if (page) params.append('page', page);
+            if (categoryId) params.append('categoryId', categoryId);
+            if (keyword) params.append('keyword', keyword);
+
+            fetch('/Books/Search?' + params.toString())
+                .then(response => response.text())
+                .then(html => {
+                    container.innerHTML = html;
+                    spinner.style.display = 'none';
+                    container.style.opacity = '1';
+                    
+                    // Update total count
+                    const totalInput = document.getElementById('totalItemsCount');
+                    if (totalInput) {
+                        document.getElementById('totalCount').textContent = totalInput.value;
+                    }
+                    
+                    // Update URL without reload
+                    const newUrl = '/Books?' + params.toString();
+                    history.pushState(null, '', newUrl);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    spinner.style.display = 'none';
+                    container.style.opacity = '1';
+                });
+        }
+    </script>
+}
