@@ -98,7 +98,7 @@ namespace BookStoreApp.Data
                     Price = 85000,
                     StockQuantity = 50,
                     Description = "Câu chuyện phiêu lưu của chú Dế Mèn qua nhiều vùng đất, gặp gỡ nhiều bạn bè và học được nhiều bài học quý giá về cuộc sống.",
-                    ImageUrl = "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1390702482i/20526127.jpg",
+                    ImageUrl = "https://cdn1.fahasa.com/media/catalog/product/d/e/de-men-50k_1.jpg",
                     CategoryId = categories[0].Id
                 },
                 new Book
@@ -110,7 +110,7 @@ namespace BookStoreApp.Data
                     Price = 95000,
                     StockQuantity = 35,
                     Description = "Tiểu thuyết trào phúng nổi tiếng của văn học Việt Nam, phản ánh xã hội Việt Nam những năm 1930.",
-                    ImageUrl = "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1546031081i/23346417.jpg",
+                    ImageUrl = "https://cdn1.fahasa.com/media/catalog/product/s/o/so-do_vu-trong-phung_1.jpg",
                     CategoryId = categories[0].Id
                 },
                 new Book
@@ -122,7 +122,7 @@ namespace BookStoreApp.Data
                     Price = 75000,
                     StockQuantity = 100,
                     Description = "Kiệt tác văn học Việt Nam, kể về cuộc đời đầy bi kịch của nàng Kiều.",
-                    ImageUrl = "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1328764288i/7979711.jpg",
+                    ImageUrl = "https://cdn1.fahasa.com/media/flashmagazine/images/page_images/truyen_kieu/2021_09_08_08_30_55_1-390x510.jpg",
                     CategoryId = categories[0].Id
                 },
 
@@ -326,7 +326,7 @@ namespace BookStoreApp.Data
                     Price = 98000,
                     StockQuantity = 55,
                     Description = "Những bài học về quản lý thời gian và sống có ý nghĩa.",
-                    ImageUrl = "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1312051574i/6138802.jpg",
+                    ImageUrl = "https://covers.openlibrary.org/b/isbn/9780062515674-L.jpg",
                     CategoryId = categories[6].Id
                 },
                 new Book
