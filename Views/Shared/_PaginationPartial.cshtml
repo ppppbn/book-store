@@ -1,0 +1,70 @@
+@model BookStoreApp.ViewModels.BookSearchViewModel
+
+<nav aria-label="Phân trang" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link page-nav" href="#" 
+               data-page="@(Model.Page - 1)"
+               data-category="@Model.CategoryId"
+               data-keyword="@Model.Keyword">
+                <i class="bi bi-chevron-left"></i> Trước
+            </a>
+        </li>
+
+        @{
+            var startPage = Math.Max(1, Model.Page - 2);
+            var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+        }
+
+        @if (startPage > 1)
+        {
+            <li class="page-item">
+                <a class="page-link page-nav" href="#" 
+                   data-page="1"
+                   data-category="@Model.CategoryId"
+                   data-keyword="@Model.Keyword">1</a>
+            </li>
+            @if (startPage > 2)
+            {
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            }
+        }
+
+        @for (int i = startPage; i <= endPage; i++)
+        {
+            <li class="page-item @(i == Model.Page ? "active" : "")">
+                <a class="page-link page-nav" href="#" 
+                   data-page="@i"
+                   data-category="@Model.CategoryId"
+                   data-keyword="@Model.Keyword">@i</a>
+            </li>
+        }
+
+        @if (endPage < Model.TotalPages)
+        {
+            @if (endPage < Model.TotalPages - 1)
+            {
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            }
+            <li class="page-item">
+                <a class="page-link page-nav" href="#" 
+                   data-page="@Model.TotalPages"
+                   data-category="@Model.CategoryId"
+                   data-keyword="@Model.Keyword">@Model.TotalPages</a>
+            </li>
+        }
+
+        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+            <a class="page-link page-nav" href="#" 
+               data-page="@(Model.Page + 1)"
+               data-category="@Model.CategoryId"
+               data-keyword="@Model.Keyword">
+                Sau <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+    <p class="text-center text-muted small">
+        Hiển thị @((Model.Page - 1) * Model.PageSize + 1) - @Math.Min(Model.Page * Model.PageSize, Model.TotalItems) 
+        trong tổng số @Model.TotalItems sách
+    </p>
+</nav>

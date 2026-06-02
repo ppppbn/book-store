@@ -1,0 +1,147 @@
+@model BookStoreApp.ViewModels.BookSearchViewModel
+@{
+    ViewData["Title"] = "Quản lý sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-book me-2"></i>Quản lý sách</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Thêm sách mới
+    </a>
+</div>
+
+<!-- Search -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Manage" method="get" class="row g-3">
+            <div class="col-md-10">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="keyword" class="form-control" 
+                           placeholder="Tìm kiếm theo tên sách, tác giả..." value="@Model.Keyword">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Book Table -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model.Books.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Ảnh</th>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>Thể loại</th>
+                            <th class="text-end">Giá</th>
+                            <th class="text-center">Tồn kho</th>
+                            <th style="width: 150px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var book in Model.Books)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(book.ImageUrl) && book.ImageUrl.StartsWith("http"))
+                                    {
+                                        <img src="@book.ImageUrl" class="img-thumbnail" style="width: 60px; height: 80px; object-fit: cover;"
+                                             onerror="this.style.display='none';this.nextElementSibling.classList.add('show');">
+                                        <div class="img-fallback bg-light align-items-center justify-content-center img-thumbnail" style="width: 60px; height: 80px;">
+                                            <i class="bi bi-book text-muted"></i>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light d-flex align-items-center justify-content-center img-thumbnail" style="width: 60px; height: 80px;">
+                                            <i class="bi bi-book text-muted"></i>
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@book.Id" class="text-decoration-none fw-bold">
+                                        @book.Title
+                                    </a>
+                                </td>
+                                <td>@book.Author</td>
+                                <td>
+                                    @if (book.Category != null)
+                                    {
+                                        <span class="badge bg-secondary">@book.Category.Name</span>
+                                    }
+                                </td>
+                                <td class="text-end text-primary fw-bold">@book.Price.ToString("N0") ₫</td>
+                                <td class="text-center">
+                                    @if (book.StockQuantity > 10)
+                                    {
+                                        <span class="badge bg-success">@book.StockQuantity</span>
+                                    }
+                                    else if (book.StockQuantity > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">@book.StockQuantity</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Hết hàng</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Edit" asp-route-id="@book.Id" class="btn btn-outline-primary" title="Sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@book.Id" class="btn btn-outline-info" title="Chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@book.Id" class="btn btn-outline-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Phân trang" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Manage" asp-route-page="@(Model.Page - 1)" asp-route-keyword="@Model.Keyword">Trước</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-action="Manage" asp-route-page="@i" asp-route-keyword="@Model.Keyword">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Manage" asp-route-page="@(Model.Page + 1)" asp-route-keyword="@Model.Keyword">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-3">Không có sách nào.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Thêm sách đầu tiên
+                </a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,146 @@
+﻿@model BookStoreApp.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<!-- Hero Section -->
+<section class="hero-section mb-5">
+    <div class="row align-items-center position-relative" style="z-index: 1;">
+        <div class="col-lg-7">
+            <h1 class="mb-3">Khám Phá Thế Giới Sách</h1>
+            <p class="lead mb-4">Hàng ngàn đầu sách hay đang chờ bạn khám phá. Mua sách online, giao hàng tận nơi, đổi trả dễ dàng.</p>
+            <div class="d-flex gap-3 flex-wrap">
+                <a href="@Url.Action("Index", "Books")" class="btn btn-lg">
+                    <i class="bi bi-book me-2"></i>Khám phá ngay
+                </a>
+                <a href="#categories" class="btn btn-lg" style="background: rgba(255,255,255,0.2); color: white;">
+                    <i class="bi bi-grid me-2"></i>Xem thể loại
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+            <div style="font-size: 10rem; opacity: 0.3;">
+                <i class="bi bi-book-half"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section id="categories" class="mb-5">
+    <div class="section-header">
+        <h3><i class="bi bi-grid-3x3-gap-fill"></i> Thể loại sách</h3>
+        <a href="@Url.Action("Index", "Books")" class="btn btn-outline-primary btn-sm">
+            Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="row g-3">
+        @foreach (var category in Model.Categories)
+        {
+            <div class="col-6 col-md-4 col-lg-3 col-xl">
+                <a href="@Url.Action("Index", "Books", new { categoryId = category.Id })" class="category-btn d-block h-100">
+                    @{
+                        var icons = new[] { "bi-book", "bi-globe", "bi-lightbulb", "bi-graph-up", "bi-cpu", "bi-emoji-smile", "bi-heart" };
+                        var index = Model.Categories.ToList().IndexOf(category) % icons.Length;
+                    }
+                    <i class="bi @icons[index]"></i>
+                    <span>@category.Name</span>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Featured Books -->
+@if (Model.FeaturedBooks.Any())
+{
+    <section class="mb-5">
+        <div class="section-header">
+            <h3><i class="bi bi-star-fill text-warning"></i> Sách nổi bật</h3>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+            @foreach (var book in Model.FeaturedBooks)
+            {
+                <div class="col">
+                    <partial name="_BookCardPartial" model="book" />
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- New Arrivals -->
+@if (Model.NewArrivals.Any())
+{
+    <section class="mb-5">
+        <div class="section-header">
+            <h3><i class="bi bi-clock-history"></i> Sách mới nhất</h3>
+            <a href="@Url.Action("Index", "Books")" class="btn btn-outline-primary btn-sm">
+                Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+            @foreach (var book in Model.NewArrivals)
+            {
+                <div class="col">
+                    <partial name="_BookCardPartial" model="book" />
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- Best Sellers -->
+@if (Model.BestSellers.Any())
+{
+    <section class="mb-5">
+        <div class="section-header">
+            <h3><i class="bi bi-fire text-danger"></i> Sách bán chạy</h3>
+            <a href="@Url.Action("Index", "Books")" class="btn btn-outline-primary btn-sm">
+                Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+            @foreach (var book in Model.BestSellers)
+            {
+                <div class="col">
+                    <partial name="_BookCardPartial" model="book" />
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<!-- Features Section -->
+<section class="mb-4">
+    <div class="row g-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="feature-card h-100">
+                <i class="bi bi-truck"></i>
+                <h5>Giao hàng nhanh</h5>
+                <p class="text-muted small mb-0">Miễn phí ship đơn từ 300K</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="feature-card h-100">
+                <i class="bi bi-shield-check"></i>
+                <h5>Sách chính hãng</h5>
+                <p class="text-muted small mb-0">Đảm bảo 100% chính hãng</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="feature-card h-100">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <h5>Đổi trả 7 ngày</h5>
+                <p class="text-muted small mb-0">Hoàn tiền nếu không hài lòng</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="feature-card h-100">
+                <i class="bi bi-headset"></i>
+                <h5>Hỗ trợ 24/7</h5>
+                <p class="text-muted small mb-0">Hotline: 1900 1234</p>
+            </div>
+        </div>
+    </div>
+</section>
