@@ -5,7 +5,14 @@
 
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="MyOrders">Đơn hàng của tôi</a></li>
+        @if (User.IsInRole("Admin"))
+        {
+            <li class="breadcrumb-item"><a asp-action="Manage">Quản trị đơn hàng</a></li>
+        }
+        else
+        {
+            <li class="breadcrumb-item"><a asp-action="MyOrders">Đơn hàng của tôi</a></li>
+        }
         <li class="breadcrumb-item active">Đơn hàng #@Model.Id</li>
     </ol>
 </nav>
@@ -91,9 +98,18 @@
             </div>
         </div>
 
-        <a asp-action="MyOrders" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
-        </a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Manage" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        }
+        else
+        {
+            <a asp-action="MyOrders" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        }
     </div>
 
     <div class="col-lg-4">

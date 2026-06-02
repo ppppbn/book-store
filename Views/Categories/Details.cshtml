@@ -35,7 +35,7 @@
         @foreach (var book in Model.Books)
         {
             <div class="col">
-                <partial name="_BookCardPartial" model="book" />
+                <partial name="_BookCardPartial" model="book" view-data='@new ViewDataDictionary(ViewData) { { "HideAction", true } }' />
             </div>
         }
     </div>

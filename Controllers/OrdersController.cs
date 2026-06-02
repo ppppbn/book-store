@@ -22,19 +22,26 @@ namespace BookStoreApp.Controllers
         }
 
         // GET: Orders/Checkout
-        public async Task<IActionResult> Checkout()
+        public async Task<IActionResult> Checkout(string? selectedIds)
         {
             var userId = _userManager.GetUserId(User);
             var user = await _userManager.FindByIdAsync(userId!);
             
-            var cartItems = await _context.CartItems
+            var cartItemsQuery = _context.CartItems
                 .Include(ci => ci.Book)
-                .Where(ci => ci.UserId == userId)
-                .ToListAsync();
+                .Where(ci => ci.UserId == userId);
+
+            if (!string.IsNullOrEmpty(selectedIds))
+            {
+                var idList = selectedIds.Split(',').Select(int.Parse).ToList();
+                cartItemsQuery = cartItemsQuery.Where(ci => idList.Contains(ci.Id));
+            }
+
+            var cartItems = await cartItemsQuery.ToListAsync();
 
             if (!cartItems.Any())
             {
-                TempData["ErrorMessage"] = "Giỏ hàng của bạn đang trống.";
+                TempData["ErrorMessage"] = "Vui lòng chọn ít nhất một sản phẩm để thanh toán.";
                 return RedirectToAction("Index", "Cart");
             }
 
@@ -45,24 +52,32 @@ namespace BookStoreApp.Controllers
                 PaymentMethod = "COD"
             };
 
+            ViewData["SelectedIds"] = selectedIds;
             return View(viewModel);
         }
 
         // POST: Orders/Checkout
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(CheckoutViewModel model)
+        public async Task<IActionResult> Checkout(CheckoutViewModel model, string? selectedIds)
         {
             var userId = _userManager.GetUserId(User);
             
-            var cartItems = await _context.CartItems
+            var cartItemsQuery = _context.CartItems
                 .Include(ci => ci.Book)
-                .Where(ci => ci.UserId == userId)
-                .ToListAsync();
+                .Where(ci => ci.UserId == userId);
+
+            if (!string.IsNullOrEmpty(selectedIds))
+            {
+                var idList = selectedIds.Split(',').Select(int.Parse).ToList();
+                cartItemsQuery = cartItemsQuery.Where(ci => idList.Contains(ci.Id));
+            }
+
+            var cartItems = await cartItemsQuery.ToListAsync();
 
             if (!cartItems.Any())
             {
-                TempData["ErrorMessage"] = "Giỏ hàng của bạn đang trống.";
+                TempData["ErrorMessage"] = "Giỏ hàng của bạn đang trống hoặc các sản phẩm đã chọn không hợp lệ.";
                 return RedirectToAction("Index", "Cart");
             }
 
@@ -70,6 +85,7 @@ namespace BookStoreApp.Controllers
 
             if (!ModelState.IsValid)
             {
+                ViewData["SelectedIds"] = selectedIds;
                 return View(model);
             }
 
@@ -79,6 +95,7 @@ namespace BookStoreApp.Controllers
                 if (item.Book == null || item.Quantity > item.Book.StockQuantity)
                 {
                     ModelState.AddModelError("", $"Sách \"{item.Book?.Title}\" không đủ số lượng trong kho.");
+                    ViewData["SelectedIds"] = selectedIds;
                     return View(model);
                 }
             }
@@ -118,7 +135,7 @@ namespace BookStoreApp.Controllers
                     _context.Books.Update(item.Book);
                 }
 
-                // Xóa giỏ hàng
+                // Xóa giỏ hàng (Chỉ các item đã chọn)
                 _context.CartItems.RemoveRange(cartItems);
 
                 await _context.SaveChangesAsync();
@@ -130,6 +147,7 @@ namespace BookStoreApp.Controllers
             {
                 await transaction.RollbackAsync();
                 ModelState.AddModelError("", "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.");
+                ViewData["SelectedIds"] = selectedIds;
                 return View(model);
             }
         }

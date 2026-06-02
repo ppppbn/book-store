@@ -8,6 +8,7 @@
 <div class="row">
     <div class="col-lg-8">
         <form asp-action="Checkout" method="post">
+            <input type="hidden" name="selectedIds" value="@ViewData["SelectedIds"]" />
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Thông tin giao hàng</h5>

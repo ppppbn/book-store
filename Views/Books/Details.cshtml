@@ -98,7 +98,7 @@
                         <div class="d-flex align-items-center gap-3">
                             <div class="input-group" style="width: 130px;">
                                 <button class="btn btn-outline-secondary" type="button" onclick="changeQty(-1)">-</button>
-                                <input type="number" id="quantity" class="form-control text-center" value="1" min="1" max="@Model.StockQuantity">
+                                <input type="text" id="quantity" class="form-control text-center fw-bold" value="1" readonly data-max="@Model.StockQuantity">
                                 <button class="btn btn-outline-secondary" type="button" onclick="changeQty(1)">+</button>
                             </div>
                             <button class="btn btn-primary btn-lg" onclick="addToCartWithQty(@Model.Id)">
@@ -149,8 +149,8 @@
     <script>
         function changeQty(delta) {
             const input = document.getElementById('quantity');
-            const max = parseInt(input.max);
-            let value = parseInt(input.value) + delta;
+            const max = parseInt(input.dataset.max) || 1;
+            let value = (parseInt(input.value) || 1) + delta;
             if (value < 1) value = 1;
             if (value > max) value = max;
             input.value = value;

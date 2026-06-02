@@ -15,6 +15,11 @@
                         <table class="table align-middle" id="cartTable">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="width: 40px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllCart" checked onchange="toggleSelectAllCart(this)">
+                                        </div>
+                                    </th>
                                     <th>Sản phẩm</th>
                                     <th class="text-center" style="width: 150px;">Số lượng</th>
                                     <th class="text-end" style="width: 150px;">Thành tiền</th>
@@ -25,6 +30,13 @@
                                 @foreach (var item in Model.Items)
                                 {
                                     <tr id="cartItem-@item.Id">
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input item-checkbox" type="checkbox" 
+                                                       value="@item.Id" checked onchange="updateCartTotals()"
+                                                       data-price="@item.Book?.Price">
+                                            </div>
+                                        </td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 @if (!string.IsNullOrEmpty(item.Book?.ImageUrl) && item.Book.ImageUrl.StartsWith("http"))
@@ -92,7 +104,7 @@
                         <strong>Tổng tiền:</strong>
                         <strong class="text-primary fs-4" id="cartTotal">@Model.TotalAmount.ToString("N0") ₫</strong>
                     </div>
-                    <a asp-controller="Orders" asp-action="Checkout" class="btn btn-primary btn-lg w-100">
+                    <a href="/Orders/Checkout" id="checkoutBtn" class="btn btn-primary btn-lg w-100">
                         <i class="bi bi-credit-card me-2"></i>Tiến hành đặt hàng
                     </a>
                     <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
@@ -117,12 +129,63 @@ else
 
 @section Scripts {
     <script>
+        function updateCartTotals() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            let totalQty = 0;
+            let totalAmount = 0;
+            
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                const qtyInput = row.querySelector('.quantity-input');
+                const price = parseFloat(cb.dataset.price) || 0;
+                const qty = parseInt(qtyInput.value) || 0;
+                
+                totalQty += qty;
+                totalAmount += (qty * price);
+            });
+            
+            document.getElementById('totalItems').textContent = totalQty + ' sản phẩm';
+            document.getElementById('cartTotal').textContent = new Intl.NumberFormat('vi-VN').format(totalAmount) + ' ₫';
+            
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            if (checkoutBtn) {
+                if (checkboxes.length > 0) {
+                    checkoutBtn.classList.remove('disabled');
+                    const selectedIds = Array.from(checkboxes).map(cb => cb.value).join(',');
+                    checkoutBtn.href = `/Orders/Checkout?selectedIds=${selectedIds}`;
+                } else {
+                    checkoutBtn.classList.add('disabled');
+                    checkoutBtn.removeAttribute('href');
+                }
+            }
+            
+            const selectAll = document.getElementById('selectAllCart');
+            const allCheckboxes = document.querySelectorAll('.item-checkbox');
+            if (selectAll) {
+                selectAll.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+                selectAll.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+            }
+        }
+
+        function toggleSelectAllCart(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+            updateCartTotals();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartTotals();
+        });
+
         function updateQuantity(cartItemId, delta) {
             const input = document.querySelector(`input[data-cart-id="${cartItemId}"]`);
             const max = parseInt(input.dataset.max) || 100;
             let newQty = parseInt(input.value) + delta;
             
-            if (newQty < 1) newQty = 1;
+            if (newQty < 1) {
+                removeFromCart(cartItemId);
+                return;
+            }
             if (newQty > max) newQty = max;
             
             if (newQty === parseInt(input.value)) return;
@@ -144,8 +207,7 @@ else
                     input.value = newQty;
                     document.querySelector(`.item-subtotal[data-cart-id="${cartItemId}"]`).textContent = 
                         new Intl.NumberFormat('vi-VN').format(data.subTotal) + ' ₫';
-                    document.getElementById('cartTotal').textContent = 
-                        new Intl.NumberFormat('vi-VN').format(data.cartTotal) + ' ₫';
+                    updateCartTotals();
                     updateCartBadge();
                 } else {
                     showToast(data.message, 'error');
@@ -158,7 +220,7 @@ else
         }
 
         function removeFromCart(cartItemId) {
-            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) return;
 
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
@@ -175,8 +237,7 @@ else
                 if (data.success) {
                     const row = document.getElementById(`cartItem-${cartItemId}`);
                     row.remove();
-                    document.getElementById('cartTotal').textContent = 
-                        new Intl.NumberFormat('vi-VN').format(data.cartTotal) + ' ₫';
+                    updateCartTotals();
                     updateCartBadge();
                     showToast(data.message, 'success');
                     
