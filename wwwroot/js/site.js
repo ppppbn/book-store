@@ -31,6 +31,36 @@ function addToCart(bookId, quantity = 1) {
     });
 }
 
+// Mua ngay (thêm vào giỏ và đi tới trang thanh toán)
+function buyNow(bookId, quantity = 1) {
+    const token = getAntiForgeryToken();
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/Cart/BuyNow';
+    
+    const bookIdInput = document.createElement('input');
+    bookIdInput.type = 'hidden';
+    bookIdInput.name = 'bookId';
+    bookIdInput.value = bookId;
+    form.appendChild(bookIdInput);
+    
+    const quantityInput = document.createElement('input');
+    quantityInput.type = 'hidden';
+    quantityInput.name = 'quantity';
+    quantityInput.value = quantity;
+    form.appendChild(quantityInput);
+    
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'hidden';
+    tokenInput.name = '__RequestVerificationToken';
+    tokenInput.value = token;
+    form.appendChild(tokenInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
 // Cập nhật badge số lượng giỏ hàng
 function updateCartBadge() {
     fetch('/Cart/GetCartCount')

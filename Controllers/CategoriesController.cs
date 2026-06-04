@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using BookStoreApp.Data;
 using BookStoreApp.Models;
 
@@ -10,10 +11,12 @@ namespace BookStoreApp.Controllers
     public class CategoriesController : Controller
     {
         private readonly BookStoreDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public CategoriesController(BookStoreDbContext context)
+        public CategoriesController(BookStoreDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // GET: Categories
@@ -59,8 +62,16 @@ namespace BookStoreApp.Controllers
         {
             if (ModelState.IsValid)
             {
+                var exists = await _context.Categories.AnyAsync(c => c.Name.Trim().ToLower() == category.Name.Trim().ToLower());
+                if (exists)
+                {
+                    ModelState.AddModelError("Name", "Thể loại đã tồn tại.");
+                    return View(category);
+                }
+
                 _context.Add(category);
                 await _context.SaveChangesAsync();
+                _cache.Remove("categories_list");
                 TempData["SuccessMessage"] = "Thêm thể loại thành công!";
                 return RedirectToAction(nameof(Index));
             }
@@ -95,10 +106,18 @@ namespace BookStoreApp.Controllers
 
             if (ModelState.IsValid)
             {
+                var exists = await _context.Categories.AnyAsync(c => c.Id != id && c.Name.Trim().ToLower() == category.Name.Trim().ToLower());
+                if (exists)
+                {
+                    ModelState.AddModelError("Name", "Thể loại đã tồn tại.");
+                    return View(category);
+                }
+
                 try
                 {
                     _context.Update(category);
                     await _context.SaveChangesAsync();
+                    _cache.Remove("categories_list");
                     TempData["SuccessMessage"] = "Cập nhật thể loại thành công!";
                 }
                 catch (DbUpdateConcurrencyException)
@@ -160,6 +179,7 @@ namespace BookStoreApp.Controllers
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
+            _cache.Remove("categories_list");
             TempData["SuccessMessage"] = "Xóa thể loại thành công!";
             return RedirectToAction(nameof(Index));
         }

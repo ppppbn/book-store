@@ -197,7 +197,7 @@ namespace BookStoreApp.Controllers
         }
 
         // GET: Orders/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? id, string? from)
         {
             if (id == null)
             {
@@ -223,6 +223,8 @@ namespace BookStoreApp.Controllers
             {
                 return Forbid();
             }
+
+            ViewData["ReturnTo"] = from;
 
             return View(order);
         }

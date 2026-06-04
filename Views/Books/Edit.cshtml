@@ -24,12 +24,12 @@
 
                     <div class="row">
                         <div class="col-md-8 mb-3">
-                            <label asp-for="Title" class="form-label"></label>
+                            <label asp-for="Title" class="form-label"></label><span class="text-danger">*</span>
                             <input asp-for="Title" class="form-control" />
                             <span asp-validation-for="Title" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label asp-for="CategoryId" class="form-label"></label>
+                            <label asp-for="CategoryId" class="form-label"></label><span class="text-danger">*</span>
                             <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
                                 <option value="">-- Chọn thể loại --</option>
                             </select>
@@ -39,7 +39,7 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Author" class="form-label"></label>
+                            <label asp-for="Author" class="form-label"></label><span class="text-danger">*</span>
                             <input asp-for="Author" class="form-control" />
                             <span asp-validation-for="Author" class="text-danger small"></span>
                         </div>
@@ -52,7 +52,7 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Price" class="form-label"></label>
+                            <label asp-for="Price" class="form-label"></label><span class="text-danger">*</span>
                             <div class="input-group">
                                 <input asp-for="Price" class="form-control" />
                                 <span class="input-group-text">₫</span>
@@ -60,7 +60,7 @@
                             <span asp-validation-for="Price" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label asp-for="StockQuantity" class="form-label"></label>
+                            <label asp-for="StockQuantity" class="form-label"></label><span class="text-danger">*</span>
                             <input asp-for="StockQuantity" class="form-control" />
                             <span asp-validation-for="StockQuantity" class="text-danger small"></span>
                         </div>

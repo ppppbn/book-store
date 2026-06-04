@@ -21,7 +21,6 @@ namespace BookStoreApp.Controllers
         }
 
         // GET: Books (Public - Danh sách sách cho khách hàng)
-        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "categoryId", "page", "keyword" })]
         public async Task<IActionResult> Index(int? categoryId, int page = 1, string? keyword = null)
         {
             var viewModel = await GetBookSearchViewModelAsync(categoryId, page, keyword);
@@ -88,7 +87,6 @@ namespace BookStoreApp.Controllers
         }
 
         // GET: Books/Details/5 (Public)
-        [ResponseCache(Duration = 120)]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
