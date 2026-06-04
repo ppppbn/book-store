@@ -94,6 +94,56 @@ namespace BookStoreApp.Controllers
             return Json(new { success = true, message = "Đã thêm sách vào giỏ hàng!", cartCount });
         }
 
+        // POST: Cart/BuyNow
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BuyNow(int bookId, int quantity = 1)
+        {
+            var userId = _userManager.GetUserId(User);
+            var book = await _context.Books.FindAsync(bookId);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            if (book.StockQuantity < quantity)
+            {
+                TempData["ErrorMessage"] = "Số lượng sách trong kho không đủ.";
+                return RedirectToAction("Details", "Books", new { id = bookId });
+            }
+
+            var existingItem = await _context.CartItems
+                .FirstOrDefaultAsync(ci => ci.UserId == userId && ci.BookId == bookId);
+
+            int cartItemId;
+            if (existingItem != null)
+            {
+                existingItem.Quantity += quantity;
+                if (existingItem.Quantity > book.StockQuantity)
+                {
+                    existingItem.Quantity = book.StockQuantity;
+                }
+                _context.Update(existingItem);
+                await _context.SaveChangesAsync();
+                cartItemId = existingItem.Id;
+            }
+            else
+            {
+                var cartItem = new CartItem
+                {
+                    UserId = userId!,
+                    BookId = bookId,
+                    Quantity = quantity,
+                    AddedAt = DateTime.Now
+                };
+                _context.CartItems.Add(cartItem);
+                await _context.SaveChangesAsync();
+                cartItemId = cartItem.Id;
+            }
+
+            return RedirectToAction("Checkout", "Orders", new { selectedIds = cartItemId.ToString() });
+        }
+
         // POST: Cart/UpdateQuantity
         [HttpPost]
         [ValidateAntiForgeryToken]

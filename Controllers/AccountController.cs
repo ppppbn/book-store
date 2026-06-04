@@ -58,6 +58,7 @@ namespace BookStoreApp.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                var addedMessages = new HashSet<string>();
                 foreach (var error in result.Errors)
                 {
                     var errorMessage = error.Code switch
@@ -71,7 +72,10 @@ namespace BookStoreApp.Controllers
                         "PasswordRequiresNonAlphanumeric" => "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.",
                         _ => error.Description
                     };
-                    ModelState.AddModelError(string.Empty, errorMessage);
+                    if (addedMessages.Add(errorMessage))
+                    {
+                        ModelState.AddModelError(string.Empty, errorMessage);
+                    }
                 }
             }
             return View(model);

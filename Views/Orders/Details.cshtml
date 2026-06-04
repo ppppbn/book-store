@@ -5,13 +5,13 @@
 
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
-        @if (User.IsInRole("Admin"))
+        @if (ViewData["ReturnTo"]?.ToString() == "myorders" || !User.IsInRole("Admin"))
         {
-            <li class="breadcrumb-item"><a asp-action="Manage">Quản trị đơn hàng</a></li>
+            <li class="breadcrumb-item"><a asp-action="MyOrders">Đơn hàng của tôi</a></li>
         }
         else
         {
-            <li class="breadcrumb-item"><a asp-action="MyOrders">Đơn hàng của tôi</a></li>
+            <li class="breadcrumb-item"><a asp-action="Manage">Quản trị đơn hàng</a></li>
         }
         <li class="breadcrumb-item active">Đơn hàng #@Model.Id</li>
     </ol>
@@ -98,15 +98,15 @@
             </div>
         </div>
 
-        @if (User.IsInRole("Admin"))
+        @if (ViewData["ReturnTo"]?.ToString() == "myorders" || !User.IsInRole("Admin"))
         {
-            <a asp-action="Manage" class="btn btn-outline-secondary">
+            <a asp-action="MyOrders" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
             </a>
         }
         else
         {
-            <a asp-action="MyOrders" class="btn btn-outline-secondary">
+            <a asp-action="Manage" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
             </a>
         }
