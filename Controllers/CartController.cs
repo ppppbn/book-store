@@ -8,7 +8,6 @@ using BookStoreApp.ViewModels;
 
 namespace BookStoreApp.Controllers
 {
-    [Authorize]
     public class CartController : Controller
     {
         private readonly BookStoreDbContext _context;
@@ -21,6 +20,7 @@ namespace BookStoreApp.Controllers
         }
 
         // GET: Cart
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
@@ -94,10 +94,7 @@ namespace BookStoreApp.Controllers
             return Json(new { success = true, message = "Đã thêm sách vào giỏ hàng!", cartCount });
         }
 
-        // POST: Cart/BuyNow
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BuyNow(int bookId, int quantity = 1)
+        private async Task<IActionResult> ProcessBuyNow(int bookId, int quantity)
         {
             var userId = _userManager.GetUserId(User);
             var book = await _context.Books.FindAsync(bookId);
@@ -144,7 +141,26 @@ namespace BookStoreApp.Controllers
             return RedirectToAction("Checkout", "Orders", new { selectedIds = cartItemId.ToString() });
         }
 
+        // POST: Cart/BuyNow
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BuyNow(int bookId, int quantity = 1)
+        {
+            return await ProcessBuyNow(bookId, quantity);
+        }
+
+        // GET: Cart/BuyNow
+        [Authorize]
+        [HttpGet]
+        [ActionName("BuyNow")]
+        public async Task<IActionResult> BuyNowGet(int bookId, int quantity = 1)
+        {
+            return await ProcessBuyNow(bookId, quantity);
+        }
+
         // POST: Cart/UpdateQuantity
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateQuantity(int cartItemId, int quantity)
@@ -186,6 +202,7 @@ namespace BookStoreApp.Controllers
         }
 
         // POST: Cart/RemoveFromCart
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFromCart(int cartItemId)

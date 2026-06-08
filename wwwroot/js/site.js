@@ -33,6 +33,15 @@ function addToCart(bookId, quantity = 1) {
 
 // Mua ngay (thêm vào giỏ và đi tới trang thanh toán)
 function buyNow(bookId, quantity = 1) {
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    const userDropdown = document.getElementById('userDropdown');
+    if (!userDropdown) {
+        // Chưa đăng nhập: chuyển hướng tới trang đăng nhập, sau đó tự động mua bằng GET
+        const returnUrl = `/Cart/BuyNow?bookId=${bookId}&quantity=${quantity}`;
+        window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(returnUrl);
+        return;
+    }
+
     const token = getAntiForgeryToken();
     
     const form = document.createElement('form');

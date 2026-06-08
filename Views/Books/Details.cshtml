@@ -114,7 +114,7 @@
                             <button class="btn btn-outline-primary btn-lg" onclick="addToCartWithQty(@Model.Id)">
                                 <i class="bi bi-cart-plus me-2"></i>Thêm vào giỏ
                             </button>
-                            <button class="btn btn-primary btn-lg" onclick="buyNow(@Model.Id)">
+                            <button class="btn btn-primary btn-lg" onclick="buyNowWithQty(@Model.Id)">
                                 <i class="bi bi-lightning-fill me-2"></i>Mua ngay
                             </button>
                         </div>
@@ -201,10 +201,10 @@
             addToCart(bookId, qty);
         }
 
-        function buyNow(bookId) {
+        function buyNowWithQty(bookId) {
             validateQty();
             const qty = parseInt(document.getElementById('quantity').value);
-            window.buyNow(bookId, qty);
+            buyNow(bookId, qty);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
